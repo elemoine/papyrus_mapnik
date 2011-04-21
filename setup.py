@@ -6,7 +6,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
 
-requires = ['pyramid', 'WebError', 'httplib2']
+requires = ['pyramid', 'WebError', 'Shapely']
 
 setup(name='papyrus_mapnik',
       version='0.1',
