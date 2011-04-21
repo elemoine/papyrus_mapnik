@@ -3,27 +3,40 @@ papyrus_mapnik
 
 The overall goal of papyrus_mapnik is to ease creating `Mapnik
 <http://mapnik.org>`_-based web services in `Pyramid
-<http://docs.pylonsproject.org/docs/pyramid.html>`_ applications.
+<http://docs.pylonsproject.org/docs/pyramid.html>`_ applications.  Towards this
+goal papyrus_mapnik provides adapters, bridges, whatever between Pyramid and
+Mapnik.
 
-papyrus_mapnik can be used together with `papyrus
+More specifically, papyrus_mapnik can be used together with `papyrus
 <http://pypi.python.org/pypi/papyrus>`_ to easily build MapFish-compliant web
 services (see `MapFish Protocol
-<http://trac.mapfish.org/trac/mapfish/wiki/MapFishProtocol>`_) outputing Mapnik
-images.
+<http://trac.mapfish.org/trac/mapfish/wiki/MapFishProtocol>`_) that output
+Mapnik images.
 
-Here is a request example::
+Here is a request looks like::
 
-    GET /countries.png?limit=100&offset=10&continent__eq=Africa&queryable=continent&img_width=1400&img_height=600&img_bbox=-180,-90,180,90
+    GET /countries.png?queryable=cont&cont__eq=Africa&img_width=1400&img_height=600&img_bbox=-180,-90,180,90
 
-papyrus_mapnik extends the MapFish Protocol with specific parameters, namely
-``img_width``, ``img_height``, and ``img_bbox``.
+The ``queryable`` and ``${attr}__eq`` are parameters defined by the MapFish
+Protocol. papyrus_mapnik extends the MapFish Protocol with specific parameters,
+namely ``img_width``, ``img_height``, and ``img_bbox``.
+
+Why?
+----
+
+"MapServer, GeoServer, Mapnik OGCServer, and others are doing a great job at
+serving images with WMS, so why doing that?"
+
+Beacause it provides simple and nice HTTP interfaces for requesting images with
+filters. And because it provides extreme flexibility and customizability. Think
+security!
 
 Dependencies
 ------------
 
 papyrus_mapnik requires the Mapnik2 libs and Python bindings. papyrus_mapnik
 doesn't require papyrus, so to use papyrus_mapnik together with papyrus both
-packages must be expressed as dependencies of the Pyramid application.
+packages must be dependencies of the Pyramid application.
 
 Install
 -------
@@ -48,32 +61,32 @@ Usage
 -----
 
 Let's assume we have ``MyApp`` Pyramid application, structured in
-a conventional way.
-
-Let's also assume this application includes a read-only MapFish-compliant
-(JSON) web service set up with a view function and a route to this view.
-
-In ``MyApp/myapp/__init__.py`` the route is defined as follows::
-
-    config.add_route('countries_vector', '/countries.json')
-
-In ``MyApp/myapp/views.py`` the view function is defined as follows::
+a conventional way. Let's also assume this application defines
+a MapFish web service, set up with a view function like this::
 
     @view_config(route_name='countries_vector', renderer='geojson')
     def countries(request)
         return proto.read(request)
 
-Now we want to use papyrus_mapnik to extend this web service so it can also
-output images. For that we define a new route::
+With papyrus_mapnik this web service can be extended to output images.  This is
+done by
 
-    config.add_route('countries_raster', '/countries.png')
+1. registering the renderer provided by papyrus_mapnik
+   (``myapp/__init__.py``)::
 
-And add another view configuration to the view function::
+    from papyrus_mapnik.renderers import MapnikRendererFactory
+    config.add_renderer('.xml', MapnikRendererFactory)
+
+1. adding a new configuration to the view function (``myapp/views.py``)::
 
     @view_config(route_name='countries_raster', renderer='myapp:population.xml')
     @view_config(route_name='countries_vector', renderer='geojson')
     def countries(request)
         return proto.read(request)
+
+2. and adding a route to this view (``myapp/__init__.py``)::
+
+    config.add_route('countries_vector', '/countries.json')
 
 In the above example it is assumed that a Mapnik configuration file named
 population.xml is located in the ``MyApp/myapp`` directory. The renderer
