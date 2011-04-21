@@ -77,14 +77,14 @@ done by
     from papyrus_mapnik.renderers import MapnikRendererFactory
     config.add_renderer('.xml', MapnikRendererFactory)
 
-1. adding a new configuration to the view function (``myapp/views.py``)::
+2. adding a new configuration to the view function (``myapp/views.py``)::
 
     @view_config(route_name='countries_raster', renderer='myapp:population.xml')
     @view_config(route_name='countries_vector', renderer='geojson')
     def countries(request)
         return proto.read(request)
 
-2. and adding a route to this view (``myapp/__init__.py``)::
+3. and adding a route to this view (``myapp/__init__.py``)::
 
     config.add_route('countries_vector', '/countries.json')
 
