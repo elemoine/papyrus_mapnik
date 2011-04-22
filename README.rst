@@ -86,7 +86,7 @@ done by
 
 3. and adding a route to this view (``myapp/__init__.py``)::
 
-    config.add_route('countries_vector', '/countries.json')
+    config.add_route('countries_raster', '/countries.png')
 
 In the above example it is assumed that a Mapnik configuration file named
 population.xml is located in the ``MyApp/myapp`` directory. The renderer
