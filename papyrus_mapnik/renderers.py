@@ -22,7 +22,7 @@ class MapnikRendererFactory:
             wkt = asShape(feature.geometry).wkt
             geometry = Geometry2d.from_wkt(wkt)
             properties = dict(feature.properties)
-            for k,v in properties.iteritems():
+            for k, v in properties.iteritems():
                 if isinstance(v, decimal.Decimal):
                     properties[k] = float(v)
                 elif isinstance(v, (datetime.date, datetime.datetime)):
@@ -38,12 +38,12 @@ class MapnikRendererFactory:
             else:
                 layer = l
         return layer
-    
+
     def __call__(self, value, system):
         request = system['request']
 
         if not isinstance(value, tuple):
-            value = (None, value);
+            value = (None, value)
 
         layer_name, collection = value
 
