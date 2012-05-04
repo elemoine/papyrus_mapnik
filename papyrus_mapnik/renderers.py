@@ -91,5 +91,5 @@ class MapnikRendererFactory:
         im = Image(width, height)
         render(m, im, 1, 1)
 
-        request.response_content_type = 'image/png'
+        request.response.content_type = 'image/png'
         return im.tostring('png')
