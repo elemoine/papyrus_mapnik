@@ -2,14 +2,15 @@ import decimal
 import datetime
 
 from pyramid.asset import abspath_from_asset_spec
-from pyramid.httpexceptions import HTTPBadRequest
 
-from mapnik2 import (MemoryDatasource, Geometry2d, Feature, Box2d, Map, Image,
-                     load_map, render)
+from mapnik import (MemoryDatasource, Geometry2d, Feature, Box2d, Map, Image,
+                    load_map, render)
 
 from shapely.geometry import asShape
 
+
 class MapnikRendererFactory:
+
     def __init__(self, info):
         self.mapfile = abspath_from_asset_spec(info.name)
 
