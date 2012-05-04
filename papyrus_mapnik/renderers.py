@@ -3,7 +3,7 @@ import datetime
 
 from pyramid.asset import abspath_from_asset_spec
 
-from mapnik import (MemoryDatasource, Geometry2d, Feature, Box2d, Map, Image,
+from mapnik import (MemoryDatasource, Feature, Box2d, Map, Image,
                     load_map, render)
 
 from shapely.geometry import asShape
@@ -19,15 +19,15 @@ class MapnikRendererFactory:
         """
         ds = MemoryDatasource()
         for feature in collection.features:
-            wkt = asShape(feature.geometry).wkt
-            geometry = Geometry2d.from_wkt(wkt)
             properties = dict(feature.properties)
             for k, v in properties.iteritems():
                 if isinstance(v, decimal.Decimal):
                     properties[k] = float(v)
                 elif isinstance(v, (datetime.date, datetime.datetime)):
                     properties[k] = str(v)
-            ds.add_feature(Feature(feature.id, geometry, **properties))
+            f = Feature(feature.id, **properties)
+            f.add_geometries_from_wkb(asShape(feature.geometry).wkb)
+            ds.add_feature(f)
         return ds
 
     def _set_layer_in_map(self, _map, layer_name):
