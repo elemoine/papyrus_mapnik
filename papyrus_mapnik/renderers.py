@@ -9,10 +9,9 @@ from mapnik import (MemoryDatasource, Feature, Box2d, Map, Image,
 from shapely.geometry import asShape
 
 
-class MapnikRendererFactory:
-
-    def __init__(self, info):
-        self.mapfile = abspath_from_asset_spec(info.name)
+class MapnikRenderer(object):
+    """
+    """
 
     def _create_datasource(self, collection):
         """ Create a Mapnik memory datasource from a feature collection.
@@ -39,57 +38,75 @@ class MapnikRendererFactory:
                 layer = l
         return layer
 
-    def __call__(self, value, system):
-        request = system['request']
+    def __call__(self, info):
+        mapfile = abspath_from_asset_spec(info.name)
 
-        if not isinstance(value, tuple):
-            value = (None, value)
+        def _render(value, system):
+            request = system['request']
 
-        layer_name, collection = value
+            if not isinstance(value, tuple):
+                value = (None, value)
 
-        if not hasattr(collection, 'features'):
-            raise ValueError('renderer is not passed a feature collection')
+            layer_name, collection = value
 
-        # get image width and height
-        try:
-            width = int(request.params.get('img_width', 600))
-        except:
-            request.response_status = 400
-            return 'incorrect width'
-        try:
-            height = int(request.params.get('img_height', 400))
-        except:
-            request.response_status = 400
-            return 'incorrect height'
+            if not hasattr(collection, 'features'):
+                raise ValueError('renderer is not passed a feature collection')
 
-        # get image bbox
-        bbox = request.params.get('img_bbox')
-        if bbox:
+            # get image width and height
             try:
-                bbox = map(float, bbox.split(','))
-            except ValueError:
+                img_width = int(request.params.get('img_width', 256))
+            except:
                 request.response_status = 400
-                return 'incorrect img_bbox'
-            bbox = Box2d(*bbox)
+                return 'incorrect img_width'
+            try:
+                img_height = int(request.params.get('img_height', 256))
+            except:
+                request.response_status = 400
+                return 'incorrect img_height'
 
-        m = Map(width, height)
-        load_map(m, self.mapfile)
+            # get image format
+            try:
+                img_format = request.params.get(
+                                 'img_format',
+                                 request.matchdict.get('format', 'png'))
+                img_format = str(img_format)
+            except:
+                request.response_status = 400
+                return 'incorrect img_format'
 
-        if len(m.layers) == 0:
-            raise ValueError('no layer in the mapnik map')
+            # get image bbox
+            img_bbox = request.params.get('img_bbox',
+                                          request.params.get('bbox'))
+            if img_bbox:
+                try:
+                    img_bbox = map(float, img_bbox.split(','))
+                except ValueError:
+                    request.response_status = 400
+                    return 'incorrect img_bbox'
+                img_bbox = Box2d(*img_bbox)
 
-        # if no layer_name is provided then, by convention, use
-        # the first layer in the mapnik map
-        if layer_name is None:
-            layer_name = m.layers[0].name
+            m = Map(img_width, img_height)
+            load_map(m, mapfile)
 
-        layer = self._set_layer_in_map(m, layer_name)
-        layer.datasource = self._create_datasource(collection)
+            if len(m.layers) == 0:
+                raise ValueError('no layer in the mapnik map')
 
-        m.zoom_to_box(bbox or layer.envelope())
+            # if no layer_name is provided then, by convention, use
+            # the first layer in the mapnik map
+            if layer_name is None:
+                layer_name = m.layers[0].name
 
-        im = Image(width, height)
-        render(m, im, 1, 1)
+            layer = self._set_layer_in_map(m, layer_name)
+            layer.datasource = self._create_datasource(collection)
 
-        request.response.content_type = 'image/png'
-        return im.tostring('png')
+            m.zoom_to_box(img_bbox or layer.envelope())
+
+            im = Image(img_width, img_height)
+            render(m, im, 1, 1)
+
+            # get the image format from the request
+
+            request.response.content_type = 'image/%s' % img_format
+            return im.tostring(img_format)
+
+        return _render
